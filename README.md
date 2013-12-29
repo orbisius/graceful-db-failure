@@ -18,6 +18,9 @@ Option #1 : Download the package
 <br/>
 https://github.com/orbisius/graceful-db-failure/archive/master.zip
 
+Extract db-error.php file.
+Set the **$mail_to** variable and then upload that to wp-content via FTP.
+
 Option #2 : Command Line
 From the command line type
 
