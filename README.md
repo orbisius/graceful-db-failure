@@ -17,5 +17,15 @@ http://club.orbisius.com/howto/wordpress-tips/fail-gracefully-wordpress-database
 // Questions/suggestions should be sent via the github's issue tracker.
 // https://github.com/orbisius/graceful-db-failure
 
+Quick Download
+----------------
+
+From the command line
+
+`
+cd wp-content
+wget https://raw.github.com/orbisius/graceful-db-failure/master/db-error.php
+`
+
 Slavi Marinov
 <a href='http://orbisius.com/' target='_blank' title="WordPress Plugin Development, WordPress Plugins">http://orbisius.com</a>
