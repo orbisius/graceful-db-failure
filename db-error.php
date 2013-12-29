@@ -84,6 +84,8 @@ $default_page_content = <<<PAGE_EOF
 			<br/>
 			Please come back at a later time. The techies have been notified.
 		</div>
+		
+		<div class='powered_by'><small>Powered by <a href='https://github.com/orbisius/graceful-db-failure' target="_blank">Graceful DB Failure</a></small></div>
 	</div>
 </body>
 </html>
