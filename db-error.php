@@ -47,12 +47,12 @@ $max_alerts = 3;
 // default: 4h i.e. if the db is still gone after 4 hours alert me again.
 $alert_reset_time = 4 * 3600;
 
-// This sends "503 Service Temporarily Unavailable" header. 
+// This sends "503 Service Temporarily Unavailable" header.
 // This is helpful if you have another service that monitors your site which will know that something is wrong when the header is sent.
 // Values: 0 or 1
 $send_error_header = 1;
 
-// If the cache is not available show this. Since db is not available don't try to use 
+// If the cache is not available show this. Since db is not available don't try to use
 // other WP functions e.g. get_header() or get_footer()
 $default_page_content = <<<PAGE_EOF
 <!DOCTYPE html>
@@ -70,9 +70,13 @@ $default_page_content = <<<PAGE_EOF
 		font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
 		text-align:center;
 	}
-	
+
 	.app_error_container h1 {
 		color:red;
+	}
+
+	.app_error_container .powered_by {
+		margin:10px 0;
 	}
 	</style>
 </head>
@@ -82,10 +86,13 @@ $default_page_content = <<<PAGE_EOF
 		<div>
 			Oops! We are having some technical difficulties.
 			<br/>
-			Please come back at a later time. The techies have been notified.
+			Please come back at a later time. The techies have been notified. <br/>
+            %%REQ_PAGE%%
+            %%SERVER_TIME%%
 		</div>
-		
-		<div class='powered_by'><small>Powered by <a href='https://github.com/orbisius/graceful-db-failure' target="_blank">Graceful DB Failure</a></small></div>
+
+		<div class='powered_by'><small>Powered by <a href='https://github.com/orbisius/graceful-db-failure' target="_blank"
+                title='opens in a new tab/window'>Graceful DB Failure</a></small></div>
 	</div>
 </body>
 </html>
@@ -99,7 +106,7 @@ $ip = empty($_SERVER['REMOTE_ADDR']) ? '0.0.0.0' : $_SERVER['REMOTE_ADDR']; // c
 
 // Sample requets URL: http://club.orbisius.com/forums/topic/problem-with-other-plugin/
 // Allow fake request URLs to be supplied (using req_uri parameter) but allow it only for local installs.
-$req_uri = !empty($_REQUEST['req_uri']) && preg_match('#^(?:127\.0\.0\.1|192\.168\.[0-2]\.)#si', $ip) ? $_REQUEST['req_uri'] : $_SERVER['REQUEST_URI'];
+$req_uri = $req_uri_orig = !empty($_REQUEST['req_uri']) && preg_match('#^(?:127\.0\.0\.1|192\.168\.[0-2]\.)#si', $ip) ? $_REQUEST['req_uri'] : $_SERVER['REQUEST_URI'];
 
 $req_uri = preg_replace('#\?.*#si', '', $req_uri); // rm params
 $req_uri = preg_replace('#\#.*#si', '', $req_uri); // Just in case
@@ -118,7 +125,7 @@ $file_buff = '';
 $cache_file_html = dirname(__FILE__) . "/cache/supercache/$host$req_uri/index.html";
 $cache_file_html_gz = dirname(__FILE__) . "/cache/supercache/$host$req_uri/index.html.gz";
 
-if (empty($show_notice) 
+if (empty($show_notice)
 		&& ( !empty($_SERVER['HTTP_ACCEPT_ENCODING']) && strstr($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip') ) // browser knows gzip?
 		&& is_file($cache_file_html_gz)) { // if we don't want to show a message we can use the gzipped version of the page (if any)
     $file_buff = file_get_contents($cache_file_html_gz);
@@ -132,6 +139,21 @@ if (empty($show_notice)
         $file_buff = preg_replace('#<body[^>]*>#si', '$0' . $warning, $file_buff);
     }
 } else {
+    $req_uri_text = $req_page = '';
+
+    if (!empty($_SERVER['QUERY_STRING'])) {
+        $req_page = '?' . $_SERVER['QUERY_STRING'];
+    } elseif (!empty($req_uri_orig) && $req_uri_orig != '/') {
+        $req_page = $req_uri_orig;
+    }
+
+    if (!empty($req_page)) {
+        $req_uri_esc = htmlentities($req_page, ENT_QUOTES, 'UTF-8');
+        $req_uri_text = "<br/>Requested Page: <a href='$req_uri_esc'>$req_uri_esc</a>";
+    }
+
+    $default_page_content = str_replace('%%REQ_PAGE%%', $req_uri_text, $default_page_content);
+    $default_page_content = str_replace('%%SERVER_TIME%%', '<br/>Server Time: ' . date('r'), $default_page_content);
 	$file_buff = $default_page_content;
 }
 
@@ -141,10 +163,10 @@ if (!empty($file_buff)) {
     echo $file_buff;
 }
 
-$headers = "From: " . $mail_from . "\r\n" 
+$headers = "From: " . $mail_from . "\r\n"
 		. "X-Mailer: PHP/" . phpversion() . "\r\n"
 		. "X-Priority: 1 (High)";
-$message = "Site: $host. " 
+$message = "Site: $host. "
 		. "It broke when someone (IP: $ip) tried to open this page: "
 		. "http://$host$req_uri";
 
@@ -162,7 +184,7 @@ if (is_file($flag_file)) {
 }
 
 // Send an email every 5m, 10m, 15m
-if ( !is_file($flag_file) 
+if ( !is_file($flag_file)
 		|| ( (time() - filemtime($flag_file) > 5 * $cnt * 60) && $cnt < $max_alerts) ) {
 
 	mail($mail_to, $subject, $message, $headers);
