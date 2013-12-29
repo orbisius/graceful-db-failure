@@ -24,6 +24,7 @@ From the command line
 
 `
 cd wp-content
+
 wget https://raw.github.com/orbisius/graceful-db-failure/master/db-error.php
 `
 
