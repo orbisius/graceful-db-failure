@@ -14,6 +14,7 @@ Then configure at least '$mail_to' variable which defaults to admin@yoursite
 
 @author Svetoslav (SLAVI) Marinov | http://orbisius.com
 @version 1.0.0
+@license GPL v2
 */
 
 // Leave this line as is. // hostname -f is full host e.g. orbisius.com (linux), windows cmd doesn't have that parameter.
@@ -92,8 +93,11 @@ PAGE_EOF;
 
 $flag_file = __FILE__ . '.flag';
 
+$ip = empty($_SERVER['REMOTE_ADDR']) ? '0.0.0.0' : $_SERVER['REMOTE_ADDR']; // command line scripts won't have IP set.
+
 // Sample requets URL: http://club.orbisius.com/forums/topic/problem-with-other-plugin/
-$req_uri = empty($_REQUEST['req_uri']) && $host != 'localhost' ? $_SERVER['REQUEST_URI'] : $_REQUEST['req_uri'];
+// Allow fake request URLs to be supplied (using req_uri parameter) but allow it only for local installs.
+$req_uri = !empty($_REQUEST['req_uri']) && preg_match('#^(?:127\.0\.0\.1|192\.168\.[0-2]\.)#si', $ip) ? $_REQUEST['req_uri'] : $_SERVER['REQUEST_URI'];
 
 $req_uri = preg_replace('#\?.*#si', '', $req_uri); // rm params
 $req_uri = preg_replace('#\#.*#si', '', $req_uri); // Just in case
@@ -139,8 +143,8 @@ $headers = "From: " . $mail_from . "\r\n"
 		. "X-Mailer: PHP/" . phpversion() . "\r\n"
 		. "X-Priority: 1 (High)";
 $message = "Site: $host. " 
-		. "It broke when someone tried to open this page:"
-		. "http://" . $host . $_SERVER['REQUEST_URI'];
+		. "It broke when someone (IP: $ip) tried to open this page: "
+		. "http://$host$req_uri";
 
 $subject = "DB error at $host";
 
