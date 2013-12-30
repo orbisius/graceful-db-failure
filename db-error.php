@@ -121,6 +121,7 @@ if ($send_error_header) {
     header('Status: 503 Service Temporarily Unavailable');
 }
 
+$cache_served = 0;
 $file_buff = '';
 $cache_file_html = dirname(__FILE__) . "/cache/supercache/$host$req_uri/index.html";
 $cache_file_html_gz = dirname(__FILE__) . "/cache/supercache/$host$req_uri/index.html.gz";
@@ -131,6 +132,7 @@ if (empty($show_notice)
     $file_buff = file_get_contents($cache_file_html_gz);
     ini_set('zlib.output_compression', 'Off');
     header('Content-Encoding: gzip');
+    $cache_served = 1;
 } elseif (is_file($cache_file_html)) {
     $file_buff = file_get_contents($cache_file_html);
 
@@ -138,6 +140,7 @@ if (empty($show_notice)
         $warning = "<div style='background:#FFC332;padding:3px;text-align:center;'>$notice_text</div>";
         $file_buff = preg_replace('#<body[^>]*>#si', '$0' . $warning, $file_buff);
     }
+    $cache_served = 1;
 } else {
     $req_uri_text = $req_page = '';
 
@@ -166,9 +169,11 @@ if (!empty($file_buff)) {
 $headers = "From: " . $mail_from . "\r\n"
 		. "X-Mailer: PHP/" . phpversion() . "\r\n"
 		. "X-Priority: 1 (High)";
+
 $message = "Site: $host. "
 		. "It broke when someone (IP: $ip) tried to open this page: "
-		. "http://$host$req_uri";
+		. "http://$host$req_uri"
+        . "\nServed Cached Version: " . ( $cache_served ? 'Yes' : 'No' );
 
 $subject = "DB error at $host";
 
